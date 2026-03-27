@@ -1,0 +1,1508 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>宝可梦连连看</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* ========== 开始界面样式 ========== */
+        .start-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .start-content {
+            text-align: center;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 90%;
+            animation: slideIn 0.6s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .start-title {
+            font-size: 3rem;
+            color: #764ba2;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 10px #667eea, 0 0 20px #667eea; }
+            to { text-shadow: 0 0 20px #f093fb, 0 0 30px #f093fb; }
+        }
+
+        .pokemon-showcase {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .showcase-item {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(145deg, #f0f0f0, #ffffff);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .showcase-item:nth-child(1) { animation-delay: 0s; }
+        .showcase-item:nth-child(2) { animation-delay: 0.2s; }
+        .showcase-item:nth-child(3) { animation-delay: 0.4s; }
+        .showcase-item:nth-child(4) { animation-delay: 0.6s; }
+        .showcase-item:nth-child(5) { animation-delay: 0.8s; }
+        .showcase-item:nth-child(6) { animation-delay: 1s; }
+        .showcase-item:nth-child(7) { animation-delay: 1.2s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .showcase-item svg {
+            width: 55px;
+            height: 55px;
+        }
+
+        .game-rules {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+            padding: 25px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+
+        .game-rules h3 {
+            color: #764ba2;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .game-rules ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .game-rules li {
+            padding: 8px 0;
+            color: #555;
+            font-size: 1rem;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .game-rules li::before {
+            content: "✨";
+            position: absolute;
+            left: 0;
+        }
+
+        .start-btn {
+            padding: 18px 60px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+            margin-bottom: 25px;
+        }
+
+        .start-btn:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.6);
+        }
+
+        .start-btn:active {
+            transform: translateY(-2px) scale(1.02);
+        }
+
+        .level-preview {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            font-size: 0.95rem;
+            color: #666;
+        }
+
+        .level-preview span {
+            background: rgba(102, 126, 234, 0.1);
+            padding: 8px 15px;
+            border-radius: 20px;
+        }
+
+        /* ========== 游戏界面样式 ========== */
+        .game-screen {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .game-title {
+            color: #fff;
+            font-size: 2.5rem;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .game-info {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .info-box {
+            background: rgba(255,255,255,0.9);
+            padding: 10px 25px;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #333;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .info-box span {
+            color: #e74c3c;
+            font-size: 1.3rem;
+        }
+
+        .level-selector {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .level-btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .level-btn.level-1 {
+            background: linear-gradient(135deg, #11998e, #38ef7d);
+            color: white;
+        }
+
+        .level-btn.level-2 {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: white;
+        }
+
+        .level-btn.level-3 {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            color: white;
+        }
+
+        .level-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .level-btn.active {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(255,255,255,0.5);
+        }
+
+        .level-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .game-container {
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        .game-board {
+            display: grid;
+            gap: 5px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .cell {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(145deg, #f0f0f0, #e0e0e0);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+            position: relative;
+        }
+
+        .cell:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.25);
+        }
+
+        .cell.selected {
+            background: linear-gradient(145deg, #ffeaa7, #fdcb6e);
+            box-shadow: 0 0 20px rgba(253, 203, 110, 0.8);
+            animation: pulse 0.5s infinite alternate;
+        }
+
+        .cell.matched {
+            animation: fadeOut 0.3s ease forwards;
+        }
+
+        .cell.empty {
+            background: transparent;
+            box-shadow: none;
+            cursor: default;
+        }
+
+        .cell.empty:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .cell.hint {
+            animation: hintPulse 1s infinite;
+            box-shadow: 0 0 15px rgba(46, 204, 113, 0.8);
+        }
+
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.08); }
+        }
+
+        @keyframes fadeOut {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+
+        @keyframes hintPulse {
+            0%, 100% { box-shadow: 0 0 15px rgba(46, 204, 113, 0.8); }
+            50% { box-shadow: 0 0 25px rgba(46, 204, 113, 1), 0 0 40px rgba(46, 204, 113, 0.5); }
+        }
+
+        .pokemon-icon {
+            width: 50px;
+            height: 50px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hint-btn {
+            background: linear-gradient(135deg, #f39c12, #e74c3c);
+            color: white;
+        }
+
+        .restart-btn {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+        }
+
+        .shuffle-btn {
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+            color: white;
+        }
+
+        .home-btn {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: white;
+        }
+
+        /* 无阻塞提示样式 */
+        .no-solution-toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #f39c12, #e74c3c);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 15px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            z-index: 2000;
+            animation: toastIn 0.3s ease;
+        }
+
+        @keyframes toastIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        /* 加载动画样式 */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+        }
+
+        .loading-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            animation: modalPop 0.3s ease;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            animation: modalPop 0.3s ease;
+            max-width: 400px;
+        }
+
+        @keyframes modalPop {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .modal h2 {
+            color: #e74c3c;
+            font-size: 2rem;
+            margin-bottom: 15px;
+        }
+
+        .modal p {
+            font-size: 1.2rem;
+            color: #555;
+            margin-bottom: 25px;
+        }
+
+        .modal-btn {
+            padding: 12px 35px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .modal-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        @media (max-width: 600px) {
+            .start-title {
+                font-size: 2rem;
+            }
+            .showcase-item {
+                width: 50px;
+                height: 50px;
+            }
+            .showcase-item svg {
+                width: 40px;
+                height: 40px;
+            }
+            .cell {
+                width: 45px;
+                height: 45px;
+            }
+            .pokemon-icon {
+                width: 38px;
+                height: 38px;
+            }
+            .game-title {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 开始界面 -->
+    <div id="startScreen" class="start-screen">
+        <div class="start-content">
+            <h1 class="start-title">🔗 宝可梦连连看 🔗</h1>
+            
+            <div class="pokemon-showcase" id="pokemonShowcase">
+                <!-- 宝可梦图标将通过JS动态插入 -->
+            </div>
+            
+            <div class="game-rules">
+                <h3>🎮 游戏规则</h3>
+                <ul>
+                    <li>点击两个相同的宝可梦进行配对</li>
+                    <li>连线不能超过2个拐角</li>
+                    <li>消除所有宝可梦即可获胜</li>
+                    <li>可使用提示和重排功能辅助</li>
+                </ul>
+            </div>
+            
+            <button class="start-btn" onclick="game.startGame()">
+                🎮 开始游戏
+            </button>
+            
+            <div class="level-preview">
+                <span>📍 第一关 6×6</span>
+                <span>📍 第二关 8×8</span>
+                <span>📍 第三关 10×10</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 游戏界面 -->
+    <div id="gameScreen" class="game-screen" style="display: none;">
+        <h1 class="game-title">🔗 宝可梦连连看 🔗</h1>
+        
+        <div class="game-info">
+            <div class="info-box">关卡: <span id="currentLevel">1</span></div>
+            <div class="info-box">剩余: <span id="remaining">18</span>对</div>
+            <div class="info-box">时间: <span id="timer">00:00</span></div>
+        </div>
+
+        <div class="level-selector">
+            <button class="level-btn level-1 active" onclick="game.selectLevel(1)">第一关 6×6</button>
+            <button class="level-btn level-2" onclick="game.selectLevel(2)" id="level2Btn" disabled>第二关 8×8</button>
+            <button class="level-btn level-3" onclick="game.selectLevel(3)" id="level3Btn" disabled>第三关 10×10</button>
+        </div>
+
+        <div class="game-container">
+            <div class="game-board" id="gameBoard"></div>
+        </div>
+
+        <div class="controls">
+            <button class="control-btn hint-btn" onclick="game.showHint()">
+                💡 提示
+            </button>
+            <button class="control-btn shuffle-btn" onclick="game.shuffle()">
+                🔀 重排
+            </button>
+            <button class="control-btn restart-btn" onclick="game.restart()">
+                🔄 重新开始
+            </button>
+            <button class="control-btn home-btn" onclick="game.showStartScreen()">
+                🏠 返回主页
+            </button>
+        </div>
+    </div>
+
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">恭喜通关!</h2>
+            <p id="modalMessage">你已完成第一关!</p>
+            <button class="modal-btn" onclick="game.closeModal()">继续</button>
+        </div>
+    </div>
+
+    <script>
+        // 宝可梦SVG图标
+        const pokemonSVGs = {
+            pikachu: `<svg viewBox="0 0 100 100" class="pokemon-icon">
+                <circle cx="50" cy="50" r="45" fill="#F4DC26"/>
+                <polygon points="20,25 35,35 25,45" fill="#000"/>
+                <polygon points="80,25 65,35 75,45" fill="#000"/>
+                <circle cx="35" cy="42" r="5" fill="#000"/>
+                <circle cx="65" cy="42" r="5" fill="#000"/>
+                <circle cx="36" cy="41" r="2" fill="#fff"/>
+                <circle cx="66" cy="41" r="2" fill="#fff"/>
+                <circle cx="30" cy="50" r="8" fill="#E74C3C"/>
+                <circle cx="70" cy="50" r="8" fill="#E74C3C"/>
+                <path d="M 40 55 Q 50 65 60 55" stroke="#000" stroke-width="3" fill="none"/>
+                <path d="M 35 60 Q 50 75 65 60" fill="#fff"/>
+            </svg>`,
+            
+            squirtle: `<svg viewBox="0 0 100 100" class="pokemon-icon">
+                <circle cx="50" cy="50" r="45" fill="#78C0D8"/>
+                <circle cx="35" cy="40" r="6" fill="#000"/>
+                <circle cx="65" cy="40" r="6" fill="#000"/>
+                <circle cx="36" cy="39" r="2" fill="#fff"/>
+                <circle cx="66" cy="39" r="2" fill="#fff"/>
+                <path d="M 40 50 Q 50 55 60 50" stroke="#000" stroke-width="2" fill="none"/>
+                <path d="M 20 45 Q 15 35 25 30" stroke="#8B4513" stroke-width="4" fill="none"/>
+                <path d="M 80 45 Q 85 35 75 30" stroke="#8B4513" stroke-width="4" fill="none"/>
+                <path d="M 30 70 Q 50 85 70 70" fill="#A0522D"/>
+            </svg>`,
+            
+            charmander: `<svg viewBox="0 0 100 100" class="pokemon-icon">
+                <circle cx="50" cy="50" r="45" fill="#F08030"/>
+                <circle cx="35" cy="42" r="5" fill="#000"/>
+                <circle cx="65" cy="42" r="5" fill="#000"/>
+                <circle cx="36" cy="41" r="2" fill="#fff"/>
+                <circle cx="66" cy="41" r="2" fill="#fff"/>
+                <path d="M 42 52 Q 50 58 58 52" stroke="#000" stroke-width="2" fill="none"/>
+                <path d="M 75 35 Q 90 20 85 40" fill="#FF6347"/>
+                <path d="M 80 30 Q 95 25 88 38" fill="#FFD700"/>
+                <path d="M 25 65 Q 50 80 75 65" fill="#F4A460"/>
+            </svg>`,
+            
+            bulbasaur: `<svg viewBox="0 0 100 100" class="pokemon-icon">
+                <circle cx="50" cy="50" r="45" fill="#7AC7A8"/>
+                <circle cx="35" cy="42" r="5" fill="#000"/>
+                <circle cx="65" cy="42" r="5" fill="#000"/>
+                <circle cx="36" cy="41" r="2" fill="#fff"/>
+                <circle cx="66" cy="41" r="2" fill="#fff"/>
+                <path d="M 42 52 Q 50 58 58 52" stroke="#000" stroke-width="2" fill="none"/>
+                <polygon points="50,15 35,35 65,35" fill="#2E8B57"/>
+                <polygon points="50,20 40,32 60,32" fill="#3CB371"/>
+                <path d="M 30 65 Q 50 78 70 65" fill="#90EE90"/>
+            </svg>`,
+            
+            jigglypuff: `<svg viewBox="0 0 100 100" class="pokemon-icon">
+                <circle cx="50" cy="50" r="45" fill="#FFB6C1"/>
+                <circle cx="35" cy="42" r="8" fill="#4169E1"/>
+                <circle cx="65" cy="42" r="8" fill="#4169E1"/>
+                <circle cx="35" cy="40" r="3" fill="#fff"/>
+                <circle cx="65" cy="40" r="3" fill="#fff"/>
+                <path d="M 45 55 Q 50 58 55 55" stroke="#000" stroke-width="2" fill="none"/>
+                <circle cx="25" cy="50" r="5" fill="#FF69B4" opacity="0.6"/>
+                <circle cx="75" cy="50" r="5" fill="#FF69B4" opacity="0.6"/>
+                <path d="M 20 30 Q 10 20 25 25" fill="#FF1493"/>
+                <path d="M 80 30 Q 90 20 75 25" fill="#FF1493"/>
+            </svg>`,
+            
+            psyduck: `<svg viewBox="0 0 100 100" class="pokemon-icon">
+                <ellipse cx="50" cy="50" rx="45" ry="42" fill="#F5DEB3"/>
+                <circle cx="35" cy="40" r="6" fill="#000"/>
+                <circle cx="65" cy="40" r="6" fill="#000"/>
+                <circle cx="36" cy="39" r="2" fill="#fff"/>
+                <circle cx="66" cy="39" r="2" fill="#fff"/>
+                <path d="M 40 55 L 50 60 L 60 55" fill="#FF8C00"/>
+                <path d="M 50 25 L 50 15" stroke="#000" stroke-width="3"/>
+                <path d="M 45 15 L 55 15" stroke="#000" stroke-width="3"/>
+                <path d="M 30 30 Q 20 25 25 35" fill="#F5DEB3" stroke="#D2691E" stroke-width="2"/>
+                <path d="M 70 30 Q 80 25 75 35" fill="#F5DEB3" stroke="#D2691E" stroke-width="2"/>
+            </svg>`,
+
+            marill: `<svg viewBox="0 0 100 100" class="pokemon-icon">
+                <circle cx="50" cy="55" r="40" fill="#4A90E2"/>
+                <ellipse cx="50" cy="65" rx="25" ry="20" fill="#fff"/>
+                <circle cx="35" cy="45" r="6" fill="#000"/>
+                <circle cx="65" cy="45" r="6" fill="#000"/>
+                <circle cx="36" cy="44" r="2" fill="#fff"/>
+                <circle cx="66" cy="44" r="2" fill="#fff"/>
+                <path d="M 45 55 Q 50 58 55 55" stroke="#000" stroke-width="2" fill="none"/>
+                <circle cx="20" cy="30" r="12" fill="#4A90E2"/>
+                <circle cx="20" cy="30" r="6" fill="#FF69B4"/>
+                <circle cx="80" cy="30" r="12" fill="#4A90E2"/>
+                <circle cx="80" cy="30" r="6" fill="#FF69B4"/>
+                <path d="M 30 85 Q 50 95 70 85" fill="#4A90E2"/>
+            </svg>`
+        };
+
+        const pokemonTypes = ['pikachu', 'squirtle', 'charmander', 'bulbasaur', 'jigglypuff', 'psyduck', 'marill'];
+        const pokemonNames = {
+            pikachu: '皮卡丘',
+            squirtle: '杰尼龟',
+            charmander: '小火龙',
+            bulbasaur: '妙蛙种子',
+            jigglypuff: '胖丁',
+            psyduck: '可达鸭',
+            marill: '玛力露丽'
+        };
+
+        class PokemonLinkGame {
+            constructor() {
+                this.level = 1;
+                this.gridSize = { 1: 6, 2: 8, 3: 10 };
+                this.board = [];
+                this.selectedCell = null;
+                this.isProcessing = false;
+                this.unlockedLevels = 1;
+                this.remainingPairs = 0;
+                this.timer = 0;
+                this.timerInterval = null;
+                this.totalPairs = 0;
+                this.gameStarted = false;
+                
+                this.init();
+            }
+
+            init() {
+                this.renderShowcase();
+                // 初始显示开始界面
+                document.getElementById('startScreen').style.display = 'flex';
+                document.getElementById('gameScreen').style.display = 'none';
+            }
+
+            renderShowcase() {
+                const showcase = document.getElementById('pokemonShowcase');
+                showcase.innerHTML = pokemonTypes.map(type => `
+                    <div class="showcase-item" title="${pokemonNames[type]}">
+                        ${pokemonSVGs[type]}
+                    </div>
+                `).join('');
+            }
+
+            async startGame() {
+                this.gameStarted = true;
+                document.getElementById('startScreen').style.display = 'none';
+                document.getElementById('gameScreen').style.display = 'flex';
+                await this.createBoard();
+                this.startTimer();
+                this.updateDisplay();
+            }
+
+            showStartScreen() {
+                this.gameStarted = false;
+                clearInterval(this.timerInterval);
+                document.getElementById('startScreen').style.display = 'flex';
+                document.getElementById('gameScreen').style.display = 'none';
+            }
+
+            startTimer() {
+                if (this.timerInterval) clearInterval(this.timerInterval);
+                this.timer = 0;
+                this.timerInterval = setInterval(() => {
+                    this.timer++;
+                    this.updateTimerDisplay();
+                }, 1000);
+            }
+
+            updateTimerDisplay() {
+                const minutes = Math.floor(this.timer / 60).toString().padStart(2, '0');
+                const seconds = (this.timer % 60).toString().padStart(2, '0');
+                document.getElementById('timer').textContent = `${minutes}:${seconds}`;
+            }
+
+            async selectLevel(level) {
+                if (level > this.unlockedLevels) return;
+                
+                this.level = level;
+                this.selectedCell = null;
+                this.isProcessing = false;
+                
+                // 更新按钮状态
+                document.querySelectorAll('.level-btn').forEach((btn, idx) => {
+                    btn.classList.toggle('active', idx + 1 === level);
+                });
+                
+                // 异步创建游戏板，避免阻塞
+                await this.createBoard();
+                this.startTimer();
+                this.updateDisplay();
+            }
+
+            async createBoard() {
+                // 显示加载提示
+                this.showLoading();
+                
+                const size = this.gridSize[this.level];
+                const totalCells = size * size;
+                this.totalPairs = totalCells / 2;
+                this.remainingPairs = this.totalPairs;
+                
+                const boardEl = document.getElementById('gameBoard');
+                boardEl.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+                boardEl.innerHTML = '';
+                
+                // 让出主线程，确保加载动画显示
+                await this.sleep(100);
+                
+                // 生成并洗牌，直到有解（完全异步）
+                let pairs = await this.generateSolvableBoard(size);
+                
+                // 异步创建游戏板
+                this.board = [];
+                let index = 0;
+                
+                for (let row = 0; row < size; row++) {
+                    this.board[row] = [];
+                    for (let col = 0; col < size; col++) {
+                        this.board[row][col] = pairs[index];
+                        
+                        const cell = document.createElement('div');
+                        cell.className = 'cell';
+                        cell.dataset.row = row;
+                        cell.dataset.col = col;
+                        cell.innerHTML = pokemonSVGs[pairs[index]];
+                        cell.addEventListener('click', () => this.handleCellClick(row, col));
+                        boardEl.appendChild(cell);
+                        
+                        index++;
+                    }
+                    
+                    // 每2行让出主线程
+                    if (row % 2 === 1) {
+                        await this.sleep(0);
+                    }
+                }
+                
+                // 让出主线程确保UI更新
+                await this.sleep(50);
+                
+                // 隐藏加载提示
+                this.hideLoading();
+            }
+            
+            async generateSolvableBoard(size) {
+                const totalPairs = (size * size) / 2;
+                let attempts = 0;
+                const maxAttempts = 30;
+                
+                while (attempts < maxAttempts) {
+                    // 使用智能放置算法生成布局
+                    let pairs = this.smartPlace(size);
+                    
+                    // 转换为二维数组检查相邻
+                    const tempBoard = [];
+                    let index = 0;
+                    for (let row = 0; row < size; row++) {
+                        tempBoard[row] = [];
+                        for (let col = 0; col < size; col++) {
+                            tempBoard[row][col] = pairs[index++];
+                        }
+                    }
+                    
+                    // 检查是否有相同类型相邻
+                    const hasAdjacent = this.checkAdjacentSame(tempBoard, size);
+                    
+                    // 异步检查是否有解
+                    const hasSol = await this.hasSolutionAsync(pairs, size);
+                    
+                    // 如果没有相邻且有解，返回这个布局
+                    if (!hasAdjacent && hasSol) {
+                        return pairs;
+                    }
+                    
+                    attempts++;
+                    // 让出主线程，保持UI响应
+                    await this.sleep(5);
+                }
+                
+                // 如果多次尝试后仍不满足条件，使用智能放置返回一个尽量分散的布局
+                return this.smartPlace(size);
+            }
+            
+            // 智能放置算法，尽量避免相同类型相邻
+            smartPlace(size) {
+                const totalPairs = (size * size) / 2;
+                const pairs = [];
+                for (let i = 0; i < totalPairs; i++) {
+                    const type = pokemonTypes[i % pokemonTypes.length];
+                    pairs.push(type, type);
+                }
+                
+                // 随机打乱pairs顺序
+                for (let i = pairs.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [pairs[i], pairs[j]] = [pairs[j], pairs[i]];
+                }
+                
+                // 创建空的游戏板
+                const board = Array(size).fill(null).map(() => Array(size).fill(null));
+                const availablePositions = [];
+                for (let r = 0; r < size; r++) {
+                    for (let c = 0; c < size; c++) {
+                        availablePositions.push({r, c});
+                    }
+                }
+                
+                // 随机打乱位置顺序
+                for (let i = availablePositions.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [availablePositions[i], availablePositions[j]] = [availablePositions[j], availablePositions[i]];
+                }
+                
+                // 尝试放置每个宝可梦，尽量避免相邻
+                for (const type of pairs) {
+                    let placed = false;
+                    
+                    // 先尝试找到不会相邻的位置
+                    for (let i = 0; i < availablePositions.length; i++) {
+                        const pos = availablePositions[i];
+                        
+                        if (!this.willBeAdjacentSame(board, size, pos.r, pos.c, type)) {
+                            board[pos.r][pos.c] = type;
+                            availablePositions.splice(i, 1);
+                            placed = true;
+                            break;
+                        }
+                    }
+                    
+                    // 如果无法避免相邻，随机放置到剩余位置
+                    if (!placed && availablePositions.length > 0) {
+                        const randomIndex = Math.floor(Math.random() * availablePositions.length);
+                        const pos = availablePositions[randomIndex];
+                        board[pos.r][pos.c] = type;
+                        availablePositions.splice(randomIndex, 1);
+                    }
+                }
+                
+                // 转换回一维数组
+                const result = [];
+                for (let r = 0; r < size; r++) {
+                    for (let c = 0; c < size; c++) {
+                        result.push(board[r][c]);
+                    }
+                }
+                return result;
+            }
+            
+            // 检查放置后是否会与相邻位置相同
+            willBeAdjacentSame(board, size, row, col, type) {
+                const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+                for (const [dr, dc] of directions) {
+                    const nr = row + dr;
+                    const nc = col + dc;
+                    if (nr >= 0 && nr < size && nc >= 0 && nc < size) {
+                        if (board[nr][nc] === type) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+            
+            // 检查是否有相同类型相邻
+            checkAdjacentSame(board, size) {
+                for (let row = 0; row < size; row++) {
+                    for (let col = 0; col < size; col++) {
+                        const current = board[row][col];
+                        
+                        // 检查右边
+                        if (col < size - 1 && board[row][col + 1] === current) {
+                            return true;
+                        }
+                        // 检查下边
+                        if (row < size - 1 && board[row + 1][col] === current) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+            
+            async hasSolutionAsync(pairs, size) {
+                const tempBoard = [];
+                let index = 0;
+                for (let row = 0; row < size; row++) {
+                    tempBoard[row] = [];
+                    for (let col = 0; col < size; col++) {
+                        tempBoard[row][col] = pairs[index++];
+                    }
+                }
+                
+                // 严格限制检查次数
+                let checkCount = 0;
+                const maxChecks = size <= 6 ? 50 : size <= 8 ? 30 : 15;
+                
+                // 采样检查，增大步长
+                const sampleStep = size <= 6 ? 2 : size <= 8 ? 3 : 4;
+                
+                for (let r1 = 0; r1 < size; r1 += sampleStep) {
+                    for (let c1 = 0; c1 < size; c1 += sampleStep) {
+                        if (tempBoard[r1][c1] === null) continue;
+                        
+                        for (let r2 = r1; r2 < size; r2 += sampleStep) {
+                            const startC2 = (r2 === r1) ? c1 + sampleStep : 0;
+                            for (let c2 = startC2; c2 < size; c2 += sampleStep) {
+                                if (tempBoard[r2][c2] === null) continue;
+                                if (tempBoard[r1][c1] !== tempBoard[r2][c2]) continue;
+                                
+                                checkCount++;
+                                if (checkCount > maxChecks) return true;
+                                
+                                // 每检查10次让出主线程
+                                if (checkCount % 10 === 0) {
+                                    await this.sleep(0);
+                                }
+                                
+                                if (this.canConnectInBoardFast(tempBoard, size, r1, c1, r2, c2)) {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                }
+                return false;
+            }
+            
+            canConnectInBoardFast(board, size, r1, c1, r2, c2) {
+                if (board[r1][c1] !== board[r2][c2]) return false;
+                
+                // 只检查直线和一个拐角，跳过耗时的两个拐角检查
+                if (this.straightLine(board, size, r1, c1, r2, c2)) return true;
+                if (this.oneCorner(board, size, r1, c1, r2, c2)) return true;
+                
+                // 两个拐角检查非常耗时，在初始验证时跳过
+                return false;
+            }
+            
+            showLoading() {
+                let loader = document.getElementById('loadingOverlay');
+                if (!loader) {
+                    loader = document.createElement('div');
+                    loader.id = 'loadingOverlay';
+                    loader.className = 'loading-overlay';
+                    loader.innerHTML = `
+                        <div class="loading-content">
+                            <div class="loading-spinner"></div>
+                            <p>正在加载关卡...</p>
+                        </div>
+                    `;
+                    document.body.appendChild(loader);
+                }
+                loader.style.display = 'flex';
+            }
+            
+            hideLoading() {
+                const loader = document.getElementById('loadingOverlay');
+                if (loader) {
+                    loader.style.display = 'none';
+                }
+            }
+
+            // 保留原有方法供其他功能使用
+            hasSolution(pairs, size) {
+                const tempBoard = [];
+                let index = 0;
+                for (let row = 0; row < size; row++) {
+                    tempBoard[row] = [];
+                    for (let col = 0; col < size; col++) {
+                        tempBoard[row][col] = pairs[index++];
+                    }
+                }
+                
+                let checkCount = 0;
+                const maxChecks = size <= 6 ? 100 : size <= 8 ? 60 : 30;
+                const sampleStep = size <= 6 ? 1 : size <= 8 ? 2 : 3;
+                
+                for (let r1 = 0; r1 < size; r1 += sampleStep) {
+                    for (let c1 = 0; c1 < size; c1 += sampleStep) {
+                        if (tempBoard[r1][c1] === null) continue;
+                        for (let r2 = r1; r2 < size; r2 += sampleStep) {
+                            const startC2 = (r2 === r1) ? c1 + sampleStep : 0;
+                            for (let c2 = startC2; c2 < size; c2 += sampleStep) {
+                                if (tempBoard[r2][c2] === null) continue;
+                                if (tempBoard[r1][c1] !== tempBoard[r2][c2]) continue;
+                                
+                                checkCount++;
+                                if (checkCount > maxChecks) return true;
+                                
+                                if (this.canConnectInBoard(tempBoard, size, r1, c1, r2, c2)) {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                }
+                return false;
+            }
+
+            canConnectInBoard(board, size, r1, c1, r2, c2) {
+                if (board[r1][c1] !== board[r2][c2]) return false;
+                if (board[r1][c1] === null) return false;
+                
+                if (this.straightLine(board, size, r1, c1, r2, c2)) return true;
+                if (this.oneCorner(board, size, r1, c1, r2, c2)) return true;
+                if (this.twoCorners(board, size, r1, c1, r2, c2)) return true;
+                
+                return false;
+            }
+
+            handleCellClick(row, col) {
+                if (this.isProcessing) return;
+                if (this.board[row][col] === null) return;
+                
+                const cell = this.getCellElement(row, col);
+                
+                // 清除之前的提示
+                document.querySelectorAll('.cell.hint').forEach(c => c.classList.remove('hint'));
+                
+                if (!this.selectedCell) {
+                    this.selectedCell = { row, col };
+                    cell.classList.add('selected');
+                } else {
+                    const prev = this.selectedCell;
+                    const prevCell = this.getCellElement(prev.row, prev.col);
+                    
+                    if (prev.row === row && prev.col === col) {
+                        prevCell.classList.remove('selected');
+                        this.selectedCell = null;
+                        return;
+                    }
+                    
+                    if (this.canConnect(prev.row, prev.col, row, col)) {
+                        this.removePair(prev.row, prev.col, row, col);
+                        prevCell.classList.remove('selected');
+                        this.selectedCell = null;
+                    } else {
+                        prevCell.classList.remove('selected');
+                        this.selectedCell = { row, col };
+                        cell.classList.add('selected');
+                    }
+                }
+            }
+
+            canConnect(r1, c1, r2, c2) {
+                if (this.board[r1][c1] !== this.board[r2][c2]) return false;
+                if (this.board[r1][c1] === null) return false;
+                
+                const size = this.gridSize[this.level];
+                
+                if (this.straightLine(this.board, size, r1, c1, r2, c2)) return true;
+                if (this.oneCorner(this.board, size, r1, c1, r2, c2)) return true;
+                if (this.twoCorners(this.board, size, r1, c1, r2, c2)) return true;
+                
+                return false;
+            }
+
+            straightLine(board, size, r1, c1, r2, c2) {
+                if (r1 === r2) {
+                    const minCol = Math.min(c1, c2);
+                    const maxCol = Math.max(c1, c2);
+                    for (let c = minCol + 1; c < maxCol; c++) {
+                        if (board[r1][c] !== null) return false;
+                    }
+                    return true;
+                }
+                
+                if (c1 === c2) {
+                    const minRow = Math.min(r1, r2);
+                    const maxRow = Math.max(r1, r2);
+                    for (let r = minRow + 1; r < maxRow; r++) {
+                        if (board[r][c1] !== null) return false;
+                    }
+                    return true;
+                }
+                
+                return false;
+            }
+
+            oneCorner(board, size, r1, c1, r2, c2) {
+                const corner1 = { row: r1, col: c2 };
+                const corner2 = { row: r2, col: c1 };
+                
+                if (board[corner1.row][corner1.col] === null) {
+                    if (this.straightLine(board, size, r1, c1, corner1.row, corner1.col) &&
+                        this.straightLine(board, size, corner1.row, corner1.col, r2, c2)) {
+                        return true;
+                    }
+                }
+                
+                if (board[corner2.row][corner2.col] === null) {
+                    if (this.straightLine(board, size, r1, c1, corner2.row, corner2.col) &&
+                        this.straightLine(board, size, corner2.row, corner2.col, r2, c2)) {
+                        return true;
+                    }
+                }
+                
+                return false;
+            }
+
+            twoCorners(board, size, r1, c1, r2, c2) {
+                // 限制检查的空格子数量，避免卡顿
+                let emptyCount = 0;
+                const maxEmptyChecks = 30;
+                
+                for (let r = 0; r < size && emptyCount < maxEmptyChecks; r++) {
+                    for (let c = 0; c < size && emptyCount < maxEmptyChecks; c++) {
+                        if (board[r][c] !== null) continue;
+                        if (r === r1 && c === c1) continue;
+                        if (r === r2 && c === c2) continue;
+                        
+                        emptyCount++;
+                        if (this.straightLine(board, size, r1, c1, r, c) &&
+                            this.oneCorner(board, size, r, c, r2, c2)) {
+                            return true;
+                        }
+                    }
+                }
+                
+                // 边界检查简化 - 只检查关键边界点
+                // 水平边界扩展
+                for (let c of [-1, size]) {
+                    if (this.straightLineWithBorder(board, size, r1, c1, r1, c) &&
+                        this.straightLineWithBorder(board, size, r1, c, r2, c) &&
+                        this.straightLineWithBorder(board, size, r2, c, r2, c2)) {
+                        return true;
+                    }
+                }
+                
+                // 垂直边界扩展
+                for (let r of [-1, size]) {
+                    if (this.straightLineWithBorder(board, size, r1, c1, r, c1) &&
+                        this.straightLineWithBorder(board, size, r, c1, r, c2) &&
+                        this.straightLineWithBorder(board, size, r, c2, r2, c2)) {
+                        return true;
+                    }
+                }
+                
+                return false;
+            }
+
+            straightLineWithBorder(board, size, r1, c1, r2, c2) {
+                if (r1 === r2) {
+                    const minCol = Math.min(c1, c2);
+                    const maxCol = Math.max(c1, c2);
+                    for (let c = minCol + 1; c < maxCol; c++) {
+                        if (c >= 0 && c < size && board[r1][c] !== null) return false;
+                    }
+                    return true;
+                }
+                
+                if (c1 === c2) {
+                    const minRow = Math.min(r1, r2);
+                    const maxRow = Math.max(r1, r2);
+                    for (let r = minRow + 1; r < maxRow; r++) {
+                        if (r >= 0 && r < size && board[r][c1] !== null) return false;
+                    }
+                    return true;
+                }
+                
+                return false;
+            }
+
+            async removePair(r1, c1, r2, c2) {
+                this.isProcessing = true;
+                
+                const cell1 = this.getCellElement(r1, c1);
+                const cell2 = this.getCellElement(r2, c2);
+                
+                cell1.classList.add('matched');
+                cell2.classList.add('matched');
+                
+                await this.sleep(300);
+                
+                this.board[r1][c1] = null;
+                this.board[r2][c2] = null;
+                
+                cell1.innerHTML = '';
+                cell2.innerHTML = '';
+                cell1.classList.remove('matched');
+                cell2.classList.remove('matched');
+                cell1.classList.add('empty');
+                cell2.classList.add('empty');
+                
+                this.remainingPairs--;
+                this.updateDisplay();
+                
+                if (this.remainingPairs === 0) {
+                    clearInterval(this.timerInterval);
+                    setTimeout(() => this.levelComplete(), 500);
+                }
+                // 移除这里的hasAnySolution检查，避免卡顿
+                // 用户可以通过提示按钮或重排按钮自行处理
+                
+                this.isProcessing = false;
+            }
+
+            hasAnySolution() {
+                const size = this.gridSize[this.level];
+                // 限制检查次数，避免卡顿
+                let checkCount = 0;
+                const maxChecks = 300;
+                
+                for (let r1 = 0; r1 < size; r1++) {
+                    for (let c1 = 0; c1 < size; c1++) {
+                        if (this.board[r1][c1] === null) continue;
+                        // 优化：从r1开始，避免重复检查
+                        for (let r2 = r1; r2 < size; r2++) {
+                            // 优化：同行从c1+1开始，不同行从0开始
+                            const startC2 = (r2 === r1) ? c1 + 1 : 0;
+                            for (let c2 = startC2; c2 < size; c2++) {
+                                if (this.board[r2][c2] === null) continue;
+                                // 优化：只检查相同类型的宝可梦
+                                if (this.board[r1][c1] !== this.board[r2][c2]) continue;
+                                
+                                checkCount++;
+                                if (checkCount > maxChecks) return true; // 假设有解
+                                
+                                if (this.canConnect(r1, c1, r2, c2)) {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                }
+                return false;
+            }
+
+            showHint() {
+                if (this.isProcessing) return;
+                
+                document.querySelectorAll('.cell.hint').forEach(c => c.classList.remove('hint'));
+                
+                const size = this.gridSize[this.level];
+                let checkCount = 0;
+                const maxChecks = 500;
+                
+                for (let r1 = 0; r1 < size; r1++) {
+                    for (let c1 = 0; c1 < size; c1++) {
+                        if (this.board[r1][c1] === null) continue;
+                        for (let r2 = r1; r2 < size; r2++) {
+                            const startC2 = (r2 === r1) ? c1 + 1 : 0;
+                            for (let c2 = startC2; c2 < size; c2++) {
+                                if (this.board[r2][c2] === null) continue;
+                                if (this.board[r1][c1] !== this.board[r2][c2]) continue;
+                                
+                                checkCount++;
+                                if (checkCount > maxChecks) {
+                                    this.showNoSolutionToast();
+                                    return;
+                                }
+                                
+                                if (this.canConnect(r1, c1, r2, c2)) {
+                                    const cell1 = this.getCellElement(r1, c1);
+                                    const cell2 = this.getCellElement(r2, c2);
+                                    cell1.classList.add('hint');
+                                    cell2.classList.add('hint');
+                                    
+                                    setTimeout(() => {
+                                        document.querySelectorAll('.cell.hint').forEach(c => c.classList.remove('hint'));
+                                    }, 2000);
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                this.showNoSolutionToast();
+            }
+
+            showNoSolutionToast() {
+                // 移除已存在的提示
+                const existing = document.querySelector('.no-solution-toast');
+                if (existing) existing.remove();
+                
+                // 创建非阻塞提示
+                const toast = document.createElement('div');
+                toast.className = 'no-solution-toast';
+                toast.innerHTML = '💡 没有可连接的宝可梦了！<br>点击"🔀 重排"按钮';
+                document.body.appendChild(toast);
+                
+                // 3秒后自动移除
+                setTimeout(() => {
+                    if (toast.parentNode) toast.remove();
+                }, 3000);
+            }
+
+            shuffle() {
+                if (this.isProcessing) return;
+                
+                const size = this.gridSize[this.level];
+                const remaining = [];
+                
+                for (let row = 0; row < size; row++) {
+                    for (let col = 0; col < size; col++) {
+                        if (this.board[row][col] !== null) {
+                            remaining.push(this.board[row][col]);
+                        }
+                    }
+                }
+                
+                for (let i = remaining.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [remaining[i], remaining[j]] = [remaining[j], remaining[i]];
+                }
+                
+                let index = 0;
+                for (let row = 0; row < size; row++) {
+                    for (let col = 0; col < size; col++) {
+                        if (this.board[row][col] !== null) {
+                            this.board[row][col] = remaining[index];
+                            const cell = this.getCellElement(row, col);
+                            cell.innerHTML = pokemonSVGs[remaining[index]];
+                            cell.classList.remove('empty');
+                            index++;
+                        }
+                    }
+                }
+                
+                if (!this.hasAnySolution()) {
+                    this.shuffle();
+                }
+            }
+
+            getCellElement(row, col) {
+                return document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+            }
+
+            levelComplete() {
+                const modal = document.getElementById('modal');
+                const title = document.getElementById('modalTitle');
+                const message = document.getElementById('modalMessage');
+                const minutes = Math.floor(this.timer / 60);
+                const seconds = this.timer % 60;
+                
+                title.textContent = '🎉 恭喜通关!';
+                title.style.color = '#27ae60';
+                
+                if (this.level < 3) {
+                    message.textContent = `你已完成第${this.level}关!\n用时: ${minutes}分${seconds}秒\n第${this.level + 1}关已解锁!`;
+                    this.unlockedLevels = Math.max(this.unlockedLevels, this.level + 1);
+                    document.getElementById(`level${this.level + 1}Btn`).disabled = false;
+                } else {
+                    message.textContent = `恭喜你通关所有关卡!\n总用时: ${minutes}分${seconds}秒\n你是真正的宝可梦大师!`;
+                }
+                
+                modal.style.display = 'flex';
+            }
+
+            closeModal() {
+                document.getElementById('modal').style.display = 'none';
+                if (this.level < 3) {
+                    this.selectLevel(this.level + 1);
+                } else {
+                    this.showStartScreen();
+                }
+            }
+
+            async restart() {
+                await this.selectLevel(this.level);
+            }
+
+            updateDisplay() {
+                document.getElementById('currentLevel').textContent = this.level;
+                document.getElementById('remaining').textContent = this.remainingPairs;
+            }
+
+            sleep(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+        }
+
+        const game = new PokemonLinkGame();
+    </script>
+</body>
+</html>
